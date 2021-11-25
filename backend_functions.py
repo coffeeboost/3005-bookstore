@@ -124,21 +124,9 @@ def owner_add_book(book):
         if not func(*args):
             raise ValueError(func.__self__.lastError())
             
-    checkQuery = QSqlQuery('SELECT pub_name FROM PUBLISHERS')
-    if (checkQuery.lastError().isValid()):
-        print("Error while finding publishers: ")
-        print(checkQuery.lastError())
-    else:
-        pubList = []
-        while (checkQuery.next()):
-            pubList.append(checkQuery.value(0))
-        if (book.get('pub_name') not in pubList):
-            print("ERROR: Cannot add book as no record of that publisher")
-            return
-        else:
-            query = QSqlQuery()
-            check(query.prepare, createdb.INSERT_BOOKS_SQL)
-            createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
+    query = QSqlQuery()
+    check(query.prepare, createdb.INSERT_BOOKS_SQL)
+    createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
                               book.get('price'), book.get('quantity'), book.get('sale_percent'))
 
 

@@ -131,6 +131,7 @@ def init_db():
     check(db.open)
 
     q = QSqlQuery()
+    q.exec("PRAGMA foreign_keys = ON;")
     check(q.exec, PUBLISHERS_SQL)
     check(q.exec, BOOKS_SQL)
     check(q.exec, USERS_SQL)
@@ -168,6 +169,6 @@ def init_db():
     check(q.prepare, INSERT_ORDERS_SQL)
     add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18', 1)
     add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 1)
-
+    
     
 init_db()
