@@ -1,5 +1,7 @@
 from PySide6.QtSql import QSqlDatabase, QSqlQuery
-from datetime import date
+from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
+                           QSqlRelationalTableModel)
+from datetime import date, datetime
 
 PUBLISHERS_SQL = """
 CREATE TABLE PUBLISHERS
@@ -16,17 +18,17 @@ CREATE TABLE PUBLISHERS
 BOOKS_SQL ="""
 CREATE TABLE BOOKS
 (
-	ISBN		numeric(13, 0),
+	ISBN		integer check (ISBN >= 1000000000000 and ISBN <= 9999999999999),
 	title		varchar(60),
 	author		varchar(60),
 	pub_name	varchar(70),
 	genre		varchar(20),
 	num_pages	numeric(3, 0),
 	price		numeric(4, 2),
-    quantity	integer,
+    quantity	integer check (quantity > 0 and quantity < 99),
 	sale_percent numeric (2, 0) check (sale_percent < 45),
 	PRIMARY KEY (ISBN),
-	FOREIGN KEY (pub_name) references PUBLISHERS
+	FOREIGN KEY (pub_name) REFERENCES PUBLISHERS
 		on delete cascade
 );
 """
@@ -62,7 +64,7 @@ values(?, ?, ?, ?, ?)
 """
 INSERT_BOOKS_SQL = """
 insert into books(ISBN, title, author, pub_name, genre, num_pages, price, quantity, sale_percent)
-values(?, ?, ?, ?, ?, ?, ?, ?)
+values(?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 INSERT_USERS_SQL = """
 insert into users(username, password, billing_info, shipping_info)
@@ -81,6 +83,9 @@ def add_publisher(q, pub_name, address, email, account_num, phone_num):
     q.addBindValue(account_num)
     q.addBindValue(phone_num)
     q.exec()
+    if (q.lastError().isValid()):
+        print("Error while inserting: ", pub_name)
+        print(q.lastError())
 
 def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity, sale_percent):
     q.addBindValue(isbn)
@@ -93,6 +98,9 @@ def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity
     q.addBindValue(quantity)
     q.addBindValue(sale_percent)
     q.exec()
+    if (q.lastError().isValid()):
+        print("Error while inserting: ", title)
+        print(q.lastError())
 
 def add_user(q, username, password, billing_info, shipping_info):
     q.addBindValue(username)
@@ -100,6 +108,9 @@ def add_user(q, username, password, billing_info, shipping_info):
     q.addBindValue(billing_info)
     q.addBindValue(shipping_info)
     q.exec()
+    if (q.lastError().isValid()):
+        print("Error while inserting: ", username)
+        print(q.lastError())
 
 def add_order(q, order_id, username, ISBN, order_date):
     q.addBindValue(order_id)
@@ -144,7 +155,7 @@ def init_db():
     add_book(q, 9780307588364, 'Gone Girl', 'Gillian Flynn', 'Broadway Books', 'Thriller', 415, 24.99, 10, 30)
     add_book(q, 9781101947807, 'Send For Me', 'Lauren Fox', 'Knopf', 'Historical Fiction', 272, 10.99, 10, 15)
     add_book(q, 9781476746586, 'All The Light We Cannot See', 'Anthony Doerr', 'Broadway Books', 'Historical Fiction', 531, 29.99, 10, 10)
-
+    
 
     check(q.prepare, INSERT_USERS_SQL)
     add_user(q, 'rm_9248', 'abc', 'Ottawa, ON, K1V6Z2', 'Ottawa, ON, K1V6Z2')
@@ -156,7 +167,5 @@ def init_db():
     add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18')
     add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18')
 
-
-
-
+    
 init_db()
