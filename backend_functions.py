@@ -66,7 +66,7 @@ def checkout(user, cart):
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_ORDERS_SQL)
     now = datetime.now()
-    dateString = now.year + '-' + now.month + '-' + now.day
+    dateString = str(now.year) + '-' + str(now.month) + '-' + str(now.day)
     for i in range(len(cart)):
         for j in range(cart[i].get('quantity')):
             createdb.add_order(query, order_id, user.get('username'), cart[i].get('ISBN'), dateString)

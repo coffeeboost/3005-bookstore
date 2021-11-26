@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDialog,
 from PySide6.QtCore import QObject, Qt, QSize, QTimer
 from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
+from devWindow import DevWindow
+from order_summary import OrderSummaryWindow
 
 class BookstoreWidget(QWidget):
 
@@ -30,6 +32,8 @@ class BookstoreWidget(QWidget):
         self.create_cart_button_widget()
         self.create_checkout_button_widget()
         self.create_cart_widget()
+        self.connect_dev_window()
+        self.connect_order_windows()
 
 
         self.left_layout.addWidget(self.completer)
@@ -40,9 +44,35 @@ class BookstoreWidget(QWidget):
         self.right_layout.addWidget(QLabel("Checkout Cart"))
         self.right_layout.addWidget(self.cart_widget)
         self.right_layout.addWidget(self.button_check_out)
+        self.main_layout.addWidget(self.dev_but) #!
+        self.main_layout.addWidget(self.order_but) #!
         self.main_layout.addLayout(self.left_layout)
         self.main_layout.addLayout(self.right_layout)
         self.setLayout(self.main_layout)
+
+    def connect_dev_window(self):
+        self.devw = None
+        self.dev_but = QPushButton("open dev window")
+        self.dev_but.clicked.connect(self.toggle_devw)
+
+    def connect_order_windows(self):
+        self.orderw = None
+        self.order_but = QPushButton("open order summary")
+        self.order_but.clicked.connect(self.toggle_orderw)
+
+    def toggle_orderw(self):
+        if self.orderw is None:
+            self.orderw = OrderSummaryWindow()
+            self.orderw.show()
+        else:
+            self.orderw = None  #bug: x'ing window won't toggle
+
+    def toggle_devw(self):
+        if self.devw is None:
+            self.devw = DevWindow()
+            self.devw.show()
+        else:
+            self.devw = None #bug: x'ing window won't toggle
 
     def create_cart_widget(self):
         self.cart_widget = QTableWidget()
@@ -65,7 +95,7 @@ class BookstoreWidget(QWidget):
 
     def create_cart_button_widget(self):
         self.button_cart = QPushButton("Add To Cart")
-        self.button_cart.clicked.connect(self.cart_handler)
+        self.button_cart.clicked.connect(self.add_to_cart_handler)
 
     def create_checkout_button_widget(self):
         self.button_check_out = QPushButton("Check Out")
@@ -94,9 +124,8 @@ class BookstoreWidget(QWidget):
         view.setModel(model)
         for i in range(9):
             view.hideColumn(i)
-        view.showColumn(1)
-        view.showColumn(2)
-        view.showColumn(4)
+        for i in [1,2,4]:
+            view.showColumn(i)
         view.resizeColumnsToContents()
         view.setSelectionBehavior(QAbstractItemView.SelectRows)
         view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -138,22 +167,22 @@ class BookstoreWidget(QWidget):
         self.updated_book = True
 
     def check_out_handler(self):
-        backend_functions.checkout(dict(username=gordontang), self.cart)
+        backend_functions.checkout(dict(username="gordontang"), self.cart)
 
-    def cart_handler(self):
+    def add_to_cart_handler(self):
         if not self.updated_book:
             return
 
         book = {
-            "ISBN":self.ISBN,
+            "ISBN":int(self.ISBN),
             "title":self.title,
             "author":self.author,
             "pub_name":self.pub_name,
             "genre":self.genre,
-            "num_pages":self.num_pages,
-            "price":self.price,
-            "quantity":self.quantity,
-            "sale_percent":self.sale_percent
+            "num_pages":float(self.num_pages),
+            "price":float(self.price),
+            "quantity":float(self.quantity),
+            "sale_percent":float(self.sale_percent)
         }
 
         if book not in self.cart:
@@ -179,10 +208,3 @@ class BookstoreWindow(QMainWindow):
         self.setCentralWidget(widget)
         self.setWindowTitle("Bookstore Window")
         self.setMinimumWidth(1000)
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    createdb.init_db()
-    window  = BookstoreWindow()
-    window.show()
-    sys.exit(app.exec())
