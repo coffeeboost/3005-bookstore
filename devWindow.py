@@ -42,7 +42,7 @@ class DevWindow(QDialog):
         main_layout.addWidget(self._books_view)
         main_layout.addWidget(QLabel("Users Table"))
         main_layout.addWidget(self._users_view)
-        main_layout.addWidget(QLabel("Publisher Table"))
+        main_layout.addWidget(QLabel("Orders Table"))
         main_layout.addWidget(self._orders_view)
 
         self.setLayout(main_layout)
