@@ -121,10 +121,11 @@ def add_order(q, order_id, username, ISBN, order_date, quantity):
     q.addBindValue(quantity)
     q.exec()
 
+def check(func, *args):
+    if not func(*args):
+        raise ValueError(func.__self__.lastError())
+
 def init_db():
-    def check(func, *args):
-        if not func(*args):
-            raise ValueError(func.__self__.lastError())
     db = QSqlDatabase.addDatabase("QSQLITE")
     db.setDatabaseName(":memory:")
 
@@ -158,7 +159,7 @@ def init_db():
     add_book(q, 9780307588364, 'Gone Girl', 'Gillian Flynn', 'Broadway Books', 'Thriller', 415, 24.99, 10, 30)
     add_book(q, 9781101947807, 'Send For Me', 'Lauren Fox', 'Knopf', 'Historical Fiction', 272, 10.99, 10, 15)
     add_book(q, 9781476746586, 'All The Light We Cannot See', 'Anthony Doerr', 'Broadway Books', 'Historical Fiction', 531, 29.99, 10, 10)
-    
+
 
     check(q.prepare, INSERT_USERS_SQL)
     add_user(q, 'rm_9248', 'abc', 'Ottawa, ON, K1V6Z2', 'Ottawa, ON, K1V6Z2')
@@ -170,5 +171,5 @@ def init_db():
     add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18', 1)
     add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 1)
     
-    
+
 init_db()

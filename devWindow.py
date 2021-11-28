@@ -14,18 +14,7 @@ from PySide6.QtCore import QObject, Qt, QSize
 from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
 
-
-def createView(title, model):
-
-    table_view = QTableView()
-    table_view.setModel(model)
-    table_view.setItemDelegate(QSqlRelationalDelegate(table_view))
-    table_view.setWindowTitle(title)
-
-    return table_view
-
-
-class DevWindow(QDialog):
+class DevWindow(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -42,14 +31,13 @@ class DevWindow(QDialog):
         main_layout.addWidget(self._books_view)
         main_layout.addWidget(QLabel("Users Table"))
         main_layout.addWidget(self._users_view)
-        main_layout.addWidget(QLabel("Publisher Table"))
+        main_layout.addWidget(QLabel("Orders Table"))
         main_layout.addWidget(self._orders_view)
 
         self.setLayout(main_layout)
-        self.setWindowTitle("Developer Window")
+        self.setWindowTitle("Dev Window")
         self.setMinimumWidth(500)
-
-
+        self.show()
 
     def create_publishers_view(self):
         model = self.create_model("publishers")
@@ -77,11 +65,3 @@ class DevWindow(QDialog):
         model.setTable(name)
         model.select()
         return model
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    createdb.init_db()
-
-    a = DevWindow()
-    sys.exit(a.exec())
