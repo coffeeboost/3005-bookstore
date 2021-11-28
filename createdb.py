@@ -50,6 +50,7 @@ CREATE TABLE ORDERS
 	username	varchar(10),
 	ISBN		numeric(13, 0),
 	order_date	date,
+    quantity    integer, 
 	PRIMARY KEY (order_id, username, ISBN, order_date),
 	FOREIGN KEY (ISBN) references BOOKS
 		on delete cascade,
@@ -71,8 +72,8 @@ insert into users(username, password, billing_info, shipping_info)
 values(?, ?, ?, ?)
 """
 INSERT_ORDERS_SQL = """
-insert into orders(order_id, username, ISBN, order_date)
-values(?, ?, ?, ?)
+insert into orders(order_id, username, ISBN, order_date, quantity)
+values(?, ?, ?, ?, ?)
 """
 
 
@@ -112,11 +113,12 @@ def add_user(q, username, password, billing_info, shipping_info):
         print("Error while inserting: ", username)
         print(q.lastError())
 
-def add_order(q, order_id, username, ISBN, order_date):
+def add_order(q, order_id, username, ISBN, order_date, quantity):
     q.addBindValue(order_id)
     q.addBindValue(username)
     q.addBindValue(ISBN)
     q.addBindValue(order_date)
+    q.addBindValue(quantity)
     q.exec()
 
 def check(func, *args):
@@ -130,6 +132,7 @@ def init_db():
     check(db.open)
 
     q = QSqlQuery()
+    q.exec("PRAGMA foreign_keys = ON;")
     check(q.exec, PUBLISHERS_SQL)
     check(q.exec, BOOKS_SQL)
     check(q.exec, USERS_SQL)
@@ -165,7 +168,8 @@ def init_db():
 
 
     check(q.prepare, INSERT_ORDERS_SQL)
-    add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18')
-    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18')
+    add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18', 1)
+    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 1)
+    
 
 init_db()
