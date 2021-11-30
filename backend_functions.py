@@ -5,14 +5,13 @@ import createdb
 from datetime import date, datetime
 import uuid
 from createdb import check
+import matplotlib.pyplot as plt
+import numpy as np
 
 THRESHOLD_VALUE = 5
 
 
 def register(user):
-    def check(func, *args):
-        if not func(*args):
-            raise ValueError(func.__self__.lastError())
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_USERS_SQL)
     createdb.add_user(query, user.get('username'), user.get('password'), user.get('billing_info'), user.get('shipping_info'))
@@ -58,10 +57,6 @@ book
 order_id: uuid
 '''
 def checkout(user, cart):
-    def check(func, *args):
-        if not func(*args):
-            raise ValueError(func.__self__.lastError())
-
     if (len(cart) == 0):
         print("Nothing present in cart")
         return
@@ -103,9 +98,6 @@ def track_order(order_id):
 
 
 def owner_add_publisher(publisher):
-    def check(func, *args):
-        if not func(*args):
-            raise ValueError(func.__self__.lastError())
          
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_PUBLISHERS_SQL)
@@ -124,7 +116,7 @@ def owner_add_book(book):
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_BOOKS_SQL)
     createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
-                          book.get('price'), book.get('quantity'), book.get('sale_percent'))
+                             book.get('price'), book.get('quantity'), book.get('sale_percent'))
 
 
 def owner_remove_book(book):
@@ -134,10 +126,109 @@ def owner_remove_book(book):
         print(query.lastError())
 
 
-def get_report(reportType):
-    pass
+def get_report(reportType, time):
+    fig = plt.figure()
+    ax = fig.add_axes([0, 0, 1, 1])
+    if reportType == 'genre':
+        prices, genres = display_genre_report(time)
+        ax.bar(genres, prices)
+        ax.set_ylabel('Price')
+        ax.set_xlabel('Genres')
+        ax.set_title('Sales per Genre')
+        plt.show()
+    elif reportType == 'author':
+        prices, authors = display_author_report(time)
+        ax.bar(authors, prices)
+        ax.set_ylabel('Price')
+        ax.set_xlabel('Authors')
+        ax.set_title('Sales per Author')
+        plt.show()
+    else:
+        prices, publishers = display_pub_report(time)
+        ax.bar(publishers, prices)
+        ax.set_ylabel('Price')
+        ax.set_xlabel('Publishers')
+        ax.set_title('Sales per Publisher')
+        plt.show()
+        
+def display_genre_report(time):
+    #add time range - TODO
+    genreSoldList = []
+    query = QSqlQuery('SELECT DISTINCT genre FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving genres")
+        print(query.lastError())
+        return
+    while (query.next()):
+        genreSoldList.append(str(query.value(0)))
+    
+    genreSoldPrice = np.zeros(len(genreSoldList))
+ 
+    query = QSqlQuery('SELECT genre, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving genre orders")
+        print(query.lastError())
+        return
+    while (query.next()):
+        for i in range(len(genreSoldList)):
+            if str(query.value(0)) == genreSoldList[i]:
+                genreSoldPrice[i] += query.value(1) * query.value(2)
+                break
+      
+    return genreSoldPrice, genreSoldList
 
-
+                    
+def display_author_report(time):
+    #add time range - TODO
+    authorSoldList = []
+    query = QSqlQuery('SELECT DISTINCT author FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving authors")
+        print(query.lastError())
+        return
+    while (query.next()):
+        authorSoldList.append(str(query.value(0)))
+    
+    authorSoldPrice = np.zeros(len(authorSoldList))
+        
+    query = QSqlQuery('SELECT author, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving author orders")
+        print(query.lastError())
+        return
+    while (query.next()):
+        for i in range(len(authorSoldList)):
+            if str(query.value(0)) == authorSoldList[i]:
+                authorSoldPrice[i] += query.value(1) * query.value(2)
+                break
+    return authorSoldPrice, authorSoldList
+                    
+def display_pub_report(time):
+    #add time range - TODO
+    pubSoldList = []
+    query = QSqlQuery('SELECT DISTINCT pub_name FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving publishers")
+        print(query.lastError())
+        return
+    while (query.next()):
+        pubSoldList.append(str(query.value(0)))
+    
+    pubSoldPrice = np.zeros(len(pubSoldList))
+        
+    query = QSqlQuery('SELECT pub_name, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    if (query.lastError().isValid()):
+        print("Error while retrieving publisher orders")
+        print(query.lastError())
+        return
+    while (query.next()):
+        for i in range(len(pubSoldList)):
+            if str(query.value(0)) == pubSoldList[i]:
+                pubSoldPrice[i] += query.value(1) * query.value(2)
+                break
+    return pubSoldPrice, pubSoldList        
+    
+                                    
 def transfer_sale(book, publisher):
     query = QSqlQuery('SELECT price, sale_percent FROM BOOKS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
     if (query.lastError().isValid()):
@@ -158,3 +249,5 @@ def check_threshold(book):
        saleCount = query.value(0)
     if (book.get('quantity') < THRESHOLD_VALUE):
         print ('Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
+        
+get_report('genre', 1)
