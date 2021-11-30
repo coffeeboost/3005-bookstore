@@ -48,7 +48,7 @@ CREATE TABLE ORDERS
 (
 	order_id	numeric(10, 0),
 	username	varchar(10),
-	ISBN		numeric(13, 0),
+	ISBN		integer check (ISBN >= 1000000000000 and ISBN <= 9999999999999),
 	order_date	date,
     quantity    integer, 
 	PRIMARY KEY (order_id, username, ISBN, order_date),
@@ -169,7 +169,8 @@ def init_db():
 
     check(q.prepare, INSERT_ORDERS_SQL)
     add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18', 1)
-    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 1)
+    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 2)
+    add_order(q, 1000000002, 'gordontang', 9781101947807, '2021-11-18', 4)
     
 
 init_db()
