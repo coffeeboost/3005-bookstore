@@ -39,8 +39,12 @@ def search(term, searchBy):
      if (query.lastError().isValid()):
         print("Error while searching")
         print(query.lastError())
-     else:
-        return query
+        return
+     searchResults = []
+     while (query.next()):
+        searchResults.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
+                                 genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
+     return searchResults
 
 '''
 user
@@ -94,12 +98,14 @@ def track_order(order_id, username):
     if (query.lastError().isValid()):
         print("Error while tracking: ", order_id)
         print(query.lastError())
-    else:
-        return query
+        return
+    orderDetails = []
+    while (query.next()):
+        orderDetails.append(dict(ISBN=query.value(0), title=str(query.value(1)), quantity=query.value(2)))
+    return orderDetails
 
 
-def owner_add_publisher(publisher):
-         
+def owner_add_publisher(publisher):         
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_PUBLISHERS_SQL)
     createdb.add_publisher(query, publisher.get('pub_name'), publisher.get('address'), publisher.get('email'), 
@@ -331,11 +337,12 @@ def transfer_sale(book, publisher):
 
 
 def check_threshold(book):
-    query = QSqlQuery('SELECT count(*) FROM ORDERS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
+    query = QSqlQuery('SELECT count(*), order_date FROM ORDERS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
     if (query.lastError().isValid()):
         print("Error while checking threshold for", book.get('title'))
         print(query.lastError())
-    while (query.next()):
+        return
+    while (query.next() and str(query.value(1))[-5:-4] == str(datetime.now().month-1)):
        saleCount = query.value(0)
     if (book.get('quantity') < THRESHOLD_VALUE):
         print ('Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
