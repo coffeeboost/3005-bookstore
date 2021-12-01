@@ -337,15 +337,16 @@ def transfer_sale(book, publisher):
 
 
 def check_threshold(book):
-    query = QSqlQuery('SELECT count(*), order_date FROM ORDERS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
+    query = QSqlQuery('SELECT quantity, order_date FROM ORDERS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
+    saleCount = 0
     if (query.lastError().isValid()):
         print("Error while checking threshold for", book.get('title'))
         print(query.lastError())
         return
     while (query.next() and str(query.value(1))[-5:-4] == str(datetime.now().month-1)):
-       saleCount = query.value(0)
+       saleCount += query.value(0)
     if (book.get('quantity') < THRESHOLD_VALUE):
         print ('Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
-        
+           
 #get_report('genre', dict(type='M', start=1, end=12))
 #get_report('genre', dict(type='Y', start=2019, end=2021))
