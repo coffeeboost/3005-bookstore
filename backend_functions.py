@@ -3,6 +3,7 @@ from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
 import createdb
 from datetime import date, datetime
+import random
 import uuid
 from createdb import check
 import matplotlib.pyplot as plt
@@ -66,12 +67,23 @@ def checkout(user, cart):
         print("Nothing present in cart")
         return
 
-    order_id=uuid.uuid4().hex
+    order_id=random.randint(1000000000, 9999999999)
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_ORDERS_SQL)
     now = datetime.now()
-    dateString = now.year + '-' + now.month + '-' + now.day
+    year = str(now.year)
+    month = str(now.month)
+    day = str(now.day)
+    if len(str(now.year)) == 1:
+        year = '0' + year
+    if len(str(now.month)) == 1:
+        month = '0' + month
+    if len(str(now.day)) == 1:
+        day = '0' + day
+    dateString = year + '-' + month + '-' + day
     for i in range(len(cart)):
+        query = QSqlQuery()
+        check(query.prepare, createdb.INSERT_ORDERS_SQL)
         createdb.add_order(query, order_id, user.get('username'), cart[i].get('ISBN'), dateString, 
                            cart[i].get('quantity'))
         query = QSqlQuery('UPDATE BOOKS SET quantity = quantity - {q} WHERE ISBN = {isbn}'.format(q=cart[i].get('quantity'),isbn=cart[i].get('ISBN')))
@@ -80,28 +92,38 @@ def checkout(user, cart):
             print(query.lastError())
             return
         query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price, quantity FROM BOOKS WHERE ISBN = {isbn}'.format(isbn=cart[i].get('ISBN')))
-        query2 = QSqlQuery('SELECT pub_name, account_num from BOOKS JOIN PUBLISHERS ON (pub_name) WHERE ISBN = {isbn}'.format(isbn=cart[i].get('ISBN')))
-        if (query.lastError().isValid() or query2.lastError().isValid()):
+        if (query.lastError().isValid()):
             print("Error while checking minimum threshold")
             print(query.lastError())
-        else:
+            return
+        while(query.next()):
             book=dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)),
                   pub_name=str(query.value(3)), genre=str(query.value(4)), num_pages=query.value(5),
                   price=query.value(6), quantity=query.value(7))
-            publisher=dict(pub_name=query2.value(0), account_num=str(query2.value(1)))
             check_threshold(book)
-            transfer_sale(book, publisher)
+            query2 = QSqlQuery('SELECT BOOKS.pub_name, account_num from BOOKS NATURAL JOIN PUBLISHERS WHERE BOOKS.ISBN = {isbn}'.format(isbn=cart[i].get('ISBN')))
+            while(query2.next()):
+                publisher=dict(pub_name=query2.value(0), account_num=query2.value(1))
+                transfer_sale(book, publisher)
+    print("Your Order Details")
+    print("Order ID: ", order_id)
+    for i in range(len(cart)):
+        print("Book title", cart[i].get('title'))
+        print("Book ISBN: ", cart[i].get('ISBN'))
+        print("Quantity: ", cart[i].get('quantity'))
+        print()
 
 
-def track_order(order_id, username):
-    query = QSqlQuery('SELECT ISBN, title, ORDERS.quantity FROM ORDERS WHERE order_id = {oid} AND username = {uname}'.format(oid=order_id, uname = username))
+def track_order(order_id):
+    query = QSqlQuery('SELECT BOOKS.ISBN, BOOKS.title, ORDERS.order_id, ORDERS.quantity FROM \
+                      ORDERS JOIN BOOKS WHERE ORDERS.order_id = {oid} AND BOOKS.ISBN=ORDERS.ISBN'.format(oid=order_id))
     if (query.lastError().isValid()):
         print("Error while tracking: ", order_id)
         print(query.lastError())
         return
     orderDetails = []
     while (query.next()):
-        orderDetails.append(dict(ISBN=query.value(0), title=str(query.value(1)), quantity=query.value(2)))
+        orderDetails.append(dict(ISBN=query.value(0), title=str(query.value(1)), order_id=query.value(2), quantity=query.value(3)))
     return orderDetails
 
 
@@ -343,10 +365,13 @@ def check_threshold(book):
         print("Error while checking threshold for", book.get('title'))
         print(query.lastError())
         return
-    while (query.next() and str(query.value(1))[-5:-4] == str(datetime.now().month-1)):
+    while (query.next() and str(query.value(1))[-5:-3] == str(datetime.now().month-1)):
        saleCount += query.value(0)
     if (book.get('quantity') < THRESHOLD_VALUE):
         print ('Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
-           
+        
 #get_report('genre', dict(type='M', start=1, end=12))
 #get_report('genre', dict(type='Y', start=2019, end=2021))
+#checkout(dict(username='gordontang'), [dict(title='Send For Me', ISBN=9781101947807, quantity=2), 
+#                                       dict(title='Shutter Island', ISBN=9780380731862, quantity=5)])
+#track_order(9261651560)
