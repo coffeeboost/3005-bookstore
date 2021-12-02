@@ -26,16 +26,23 @@ user
 }
 '''
 def login(user):
-    query = QSqlQuery('SELECT username, password FROM USERS WHERE username = {name}'.format(name=user.get('username')))
+    count = 0
+    username = '\'' + user.get('username') + '\''
+    query = QSqlQuery('SELECT username, password FROM USERS WHERE username = {name}'.format(name=username))
     if (query.lastError().isValid()):
         print("Error while logging in")
         print(query.lastError())
         return False
-    else:
-        return True
+    while(query.next()):
+        count += 1
+    if (count > 0):
+        return True 
+    return False
 
 
 def search(term, searchBy):
+     if (searchBy == 'author' or searchBy == 'pub_name' or searchBy == 'genre'):
+        term = '\'' + term + '\''
      query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searching} = {term}'.format(searching=searchBy, term=term))
      if (query.lastError().isValid()):
         print("Error while searching")
@@ -135,7 +142,8 @@ def owner_add_publisher(publisher):
 
 
 def owner_remove_publisher(publisher):
-    query = QSqlQuery('DROP FROM PUBLISHER WHERE pub_name = {name}'.format(name = publisher.get('pub_name')))
+    pubName = '\'' + publisher.get('pub_name') + '\''
+    query = QSqlQuery('DROP FROM PUBLISHER WHERE pub_name = {name}'.format(name = pubName))
     if (query.lastError().isValid()):
         print("Error while removing: ", publisher.get('pub_name'))
         print(query.lastError())
@@ -296,15 +304,18 @@ def display_author_report(time):
 
 def view_similar_books(book):
     count = 0
-    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = {g}'.format(g=book.get('genre'))) 
+    genreSimilar = '\'' + book.get('genre') + '\''
+    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = {g}'.format(g=genreSimilar)) 
     if (query.lastError().isValid()):
         print("Error while retrieving similar books")
         print(query.lastError())
         return
     similarBooks = []
     while (query.next() or count < 3):
-        similarBooks.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
+        if query.value(0) is not None and query.value(0) != book.get('ISBN'): 
+            similarBooks.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
                                  genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
+        count += 1
     return similarBooks
 
                     
@@ -375,3 +386,6 @@ def check_threshold(book):
 #checkout(dict(username='gordontang'), [dict(title='Send For Me', ISBN=9781101947807, quantity=2), 
 #                                       dict(title='Shutter Island', ISBN=9780380731862, quantity=5)])
 #track_order(9261651560)
+#login(dict(username='gordontang'))
+#search('Mystery', 'genre')
+#view_similar_books(dict(ISBN=9781101947807, genre='Historical Fiction'))
