@@ -14,6 +14,7 @@ from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
 from devWindow import DevWindow
 from order_summary import OrderSummaryWindow
+from adminWindow import AdminWindow
 
 class BookstoreWidget(QWidget):
 
@@ -25,6 +26,7 @@ class BookstoreWidget(QWidget):
         self.cart = []
         self.main_layout = QHBoxLayout()
         self.left_layout = QVBoxLayout()
+        self.mid_layout = QVBoxLayout()
         self.right_layout = QVBoxLayout()
         self.create_book_view()
         self.create_book_info_widget()
@@ -34,21 +36,34 @@ class BookstoreWidget(QWidget):
         self.create_cart_widget()
         self.connect_dev_window()
         self.connect_order_windows()
+        self.connect_admin_windows() #TODO
 
 
-        self.left_layout.addWidget(self.completer)
-        self.left_layout.addWidget(QLabel("Books Table"))
-        self.left_layout.addWidget(self.book_view)
-        self.left_layout.addWidget(self.info_book)
-        self.left_layout.addWidget(self.button_cart)
-        self.right_layout.addWidget(QLabel("Checkout Cart"))
-        self.right_layout.addWidget(self.cart_widget)
-        self.right_layout.addWidget(self.button_check_out)
-        self.main_layout.addWidget(self.dev_but) #!
-        self.main_layout.addWidget(self.order_but) #!
+        self.mid_layout.addWidget(self.completer)
+        self.mid_layout.addWidget(QLabel("Books Table"))
+        self.mid_layout.addWidget(self.book_view)
+        self.mid_layout.addWidget(self.info_book)
+        self.mid_layout.addWidget(self.button_cart)
+        self.right_layout.addLayout(self.cart_layout)
+        self.left_layout.addWidget(self.dev_but)
+        self.left_layout.addWidget(self.order_but)
+        self.left_layout.addWidget(self.admin_but)
         self.main_layout.addLayout(self.left_layout)
+        self.main_layout.addLayout(self.mid_layout)
         self.main_layout.addLayout(self.right_layout)
         self.setLayout(self.main_layout)
+
+    def connect_admin_windows(self):
+        self.adminw = None
+        self.admin_but = QPushButton("open admin window")
+        self.admin_but.clicked.connect(self.toggle_adminw)
+
+    def toggle_adminw(self):
+        if self.adminw is None:
+            self.adminw = AdminWindow()
+            self.adminw.show()
+        else:
+            self.adminw = None  #bug: x'ing window won't toggle
 
     def connect_dev_window(self):
         self.devw = None
@@ -75,9 +90,27 @@ class BookstoreWidget(QWidget):
             self.devw = None #bug: x'ing window won't toggle
 
     def create_cart_widget(self):
+        self.cart_layout = QVBoxLayout()
         self.cart_widget = QTableWidget()
-        self.cart_widget.setColumnCount(9)
-        self.cart_widget.setHorizontalHeaderLabels(["ISBN", "title", "author", "pub_name", "genre", "num_pages", "price", "quantity", "sale_percent"])
+        self.cart_widget.setColumnCount(3)
+        self.cart_widget.setHorizontalHeaderLabels(["ISBN", "title", "count"])
+
+        self.form = QGroupBox() #refactor
+        layout = QFormLayout()
+        self.form.setLayout(layout)
+        self.username_line_edit = QLineEdit()
+        layout.addRow(QLabel("Username:"), self.username_line_edit)
+        self.username_button = QDialogButtonBox(QDialogButtonBox.Ok)
+        self.username_button.accepted.connect(self.handlerA)
+
+
+        self.cart_layout.addWidget(QLabel("Checkout Cart"))
+        self.cart_layout.addWidget(self.cart_widget)
+        self.cart_layout.addWidget(self.form)
+        self.cart_layout.addWidget(self.username_button)
+
+    def handlerA(self):
+        print(self.username_line_edit.text())
 
     def create_book_info_widget(self):
         self.info_book = QDialog()
@@ -167,7 +200,7 @@ class BookstoreWidget(QWidget):
         self.updated_book = True
 
     def check_out_handler(self):
-        backend_functions.checkout(dict(username="gordontang"), self.cart)
+        backend_functions.checkout(dict(username="gordontang"), self.cart, self.username)
 
     def add_to_cart_handler(self):
         if not self.updated_book:
@@ -176,30 +209,42 @@ class BookstoreWidget(QWidget):
         book = {
             "ISBN":int(self.ISBN),
             "title":self.title,
-            "author":self.author,
-            "pub_name":self.pub_name,
-            "genre":self.genre,
-            "num_pages":float(self.num_pages),
-            "price":float(self.price),
-            "quantity":float(self.quantity),
-            "sale_percent":float(self.sale_percent)
+            "count":1
         }
-
-        if book not in self.cart:
+        #  and self.is_below_threshold(book)
+        if self.book_is_in_cart(book):
+            new_count = self.increase_book_count(book)
             row = self.cart_widget.rowCount()
-            rowPosition = self.cart_widget.rowCount()
-            self.cart_widget.insertRow(rowPosition)
+            for i in range(row):
+                if self.cart_widget.item(i,0).text() == self.ISBN:
+                    self.cart_widget.setItem(i, 2, QTableWidgetItem(str(new_count)))
+
+        if not self.book_is_in_cart(book):
+            row = self.cart_widget.rowCount()
+            self.cart_widget.insertRow(row)
             self.cart_widget.setItem(row, 0, QTableWidgetItem(self.ISBN))
             self.cart_widget.setItem(row, 1, QTableWidgetItem(self.title))
-            self.cart_widget.setItem(row, 2, QTableWidgetItem(self.author))
-            self.cart_widget.setItem(row, 3, QTableWidgetItem(self.pub_name))
-            self.cart_widget.setItem(row, 4, QTableWidgetItem(self.genre))
-            self.cart_widget.setItem(row, 5, QTableWidgetItem(self.num_pages))
-            self.cart_widget.setItem(row, 6, QTableWidgetItem(self.price))
-            self.cart_widget.setItem(row, 7, QTableWidgetItem(self.quantity))
-            self.cart_widget.setItem(row, 8, QTableWidgetItem(self.sale_percent))
+            self.cart_widget.setItem(row, 2, QTableWidgetItem("1"))
             self.cart.append(book)
             self.cart_widget.setRowCount(row+1)
+
+
+    def book_is_in_cart(self, book):
+        for b in self.cart:
+            if b.get("ISBN") == book.get("ISBN"):
+                return True
+        return False
+
+    def increase_book_count(self, book):
+        count = 0
+        for b in self.cart:
+            if b.get("ISBN") == book.get("ISBN"):
+                b["count"] += 1
+                count = b["count"]
+        return count
+
+    def is_below_threshold(book):
+        return backend_functions.is_below_threshold(book)
 
 class BookstoreWindow(QMainWindow):
     def __init__(self):
