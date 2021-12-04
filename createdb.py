@@ -46,16 +46,14 @@ CREATE TABLE USERS
 ORDERS_SQL = """
 CREATE TABLE ORDERS
 (
-	order_id	numeric(10, 0),
+	order_id	integer check(order_id >= 1000000000 and order_id <= 9999999999),
 	username	varchar(10),
-	ISBN		numeric(13, 0),
+	ISBN		integer check (ISBN >= 1000000000000 and ISBN <= 9999999999999),
 	order_date	date,
     quantity    integer, 
 	PRIMARY KEY (order_id, username, ISBN, order_date),
 	FOREIGN KEY (ISBN) references BOOKS
-		on delete cascade,
 	FOREIGN KEY (username) references USERS
-		on delete cascade
 );
 """
 
@@ -169,7 +167,9 @@ def init_db():
 
     check(q.prepare, INSERT_ORDERS_SQL)
     add_order(q, 1000000001, 'rm_9248', 9780804188975, '2021-11-18', 1)
-    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 1)
+    add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 2)
+    add_order(q, 1000000002, 'gordontang', 9781101947807, '2020-12-18', 4)
+    add_order(q, 1000000002, 'gordontang', 9780307269751, '2019-12-18', 4)
     
 
 init_db()
