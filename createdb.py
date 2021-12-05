@@ -50,7 +50,7 @@ CREATE TABLE ORDERS
 	username	varchar(10),
 	ISBN		integer check (ISBN >= 1000000000000 and ISBN <= 9999999999999),
 	order_date	date,
-    quantity    integer,
+    quantity    integer, 
 	PRIMARY KEY (order_id, username, ISBN, order_date),
 	FOREIGN KEY (ISBN) references BOOKS
 	FOREIGN KEY (username) references USERS
@@ -85,6 +85,7 @@ def add_publisher(q, pub_name, address, email, account_num, phone_num):
     if (q.lastError().isValid()):
         print("Error while inserting: ", pub_name)
         print(q.lastError())
+        return dict(error=True, data="Error while inserting {publisher}. Details: {details}".format(publisher=pub_name, details=q.lastError().text()))
 
 def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity, sale_percent):
     q.addBindValue(isbn)
@@ -100,6 +101,7 @@ def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity
     if (q.lastError().isValid()):
         print("Error while inserting: ", title)
         print(q.lastError())
+        return dict(error=True, data="Error while inserting {book}. Details: {details}".format(book=title, details=q.lastError().text()))
 
 def add_user(q, username, password, billing_info, shipping_info):
     q.addBindValue(username)
@@ -110,6 +112,7 @@ def add_user(q, username, password, billing_info, shipping_info):
     if (q.lastError().isValid()):
         print("Error while inserting: ", username)
         print(q.lastError())
+        return dict(error=True, data="Error while inserting {uname}. Details: {details}".format(uname=username, details=q.lastError().text()))
 
 def add_order(q, order_id, username, ISBN, order_date, quantity):
     q.addBindValue(order_id)
@@ -170,6 +173,6 @@ def init_db():
     add_order(q, 1000000002, 'rm_9248', 9781101947807, '2021-11-18', 2)
     add_order(q, 1000000003, 'gordontang', 9781101947807, '2020-12-18', 4)
     add_order(q, 1000000004, 'gordontang', 9780307269751, '2019-12-18', 4)
-
+    
 
 init_db()
