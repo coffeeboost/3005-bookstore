@@ -29,7 +29,7 @@ def login(user):
 
 
 def search(term, searchBy):
-     query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searching} = ?'.format(searching=searchBy))
+     query = QSqlQuery(f'SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searchBy}=?')
      query.addBindValue(term)
      query.exec()
      if (query.lastError().isValid()):
@@ -135,7 +135,7 @@ def owner_add_publisher(publisher):
 
 
 def owner_remove_publisher(publisher):
-    query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name ?')
+    query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name=?')
     query.addBindValue(publisher.get('pub_name'))
     query.exec()
     if (query.lastError().isValid()):
