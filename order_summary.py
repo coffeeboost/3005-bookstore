@@ -34,25 +34,31 @@ class OrderSummaryWidget(QWidget):
 
         self.form = QGroupBox()
         layout = QFormLayout()
-        self.username_line_edit = QLineEdit()
-        layout.addRow(QLabel("Username:"), self.username_line_edit)
+        self.order_id_line_edit = QLineEdit()
+        layout.addRow(QLabel("Order id:"), self.order_id_line_edit)
         self.form.setLayout(layout)
-        buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttonBox.accepted.connect(self.handlerA)
+        # buttonBox = QDialogButtonBox(QDialogButtonBox.Ok)
+        # buttonBox.accepted.connect(self.handlerA)
         main_layout.addWidget(self.order_widget)
-        main_layout.addWidget(self.button_order)
         main_layout.addWidget(self.form)
-        main_layout.addWidget(buttonBox)
+        main_layout.addWidget(self.button_order)
+
+        # main_layout.addWidget(buttonBox)
         self.setLayout(main_layout)
 
-    def handlerA(self):
-        print(self.username_line_edit.text())
+    # def handlerA(self):
+    #     self.username = self.username_line_edit.text()
+    #     print(self.username_line_edit.text())
 
     def order_view_handler(self):
-        print(self.username)
-        print(self.order_id)
-        if not backend_functions.login(self.username):
-            return
+        # self.order_id = 1000000002
+        self.order_widget.clear()
+        self.order_widget.setRowCount(0)
+        self.order_id = int(self.order_id_line_edit.text())
+        # print(self.username)
+        # print(self.order_id)
+        # if not backend_functions.login(dict(username=self.username)):
+            # return
 
         self.orders = backend_functions.track_order(self.order_id)
 
@@ -60,9 +66,9 @@ class OrderSummaryWidget(QWidget):
             row = self.order_widget.rowCount()
             rowPosition = self.order_widget.rowCount()
             self.order_widget.insertRow(rowPosition)
-            self.order_widget.setItem(row, 0, QTableWidgetItem(order.get("ISBN")))
+            self.order_widget.setItem(row, 0, QTableWidgetItem(str(order.get("ISBN"))))
             self.order_widget.setItem(row, 1, QTableWidgetItem(order.get("title")))
-            self.order_widget.setItem(row, 2, QTableWidgetItem(order.get("quantity")))
+            self.order_widget.setItem(row, 2, QTableWidgetItem(str(order.get("quantity"))))
             self.order_widget.setRowCount(row+1)
 
 class OrderSummaryWindow(QMainWindow):
