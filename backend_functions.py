@@ -29,7 +29,7 @@ def login(user):
     while(query.next()):
         count += 1
     if (count > 0):
-        return True 
+        return True
     return False
 
 
@@ -64,14 +64,14 @@ order_id: uuid
 def checkout(user, cart):
     if not login(user):
         return dict(error=True, data="Invalid username")
-    
+
     if (len(cart) == 0):
         #print("Nothing present in cart")
         return dict(error=True, data="Nothing present in cart")
     presentOrders = []
     query = QSqlQuery('SELECT order_id FROM ORDERS')
     while (query.next()):
-        presentOrders.append(query.value(0))          
+        presentOrders.append(query.value(0))
     order_id=random.randint(1000000000, 9999999999)
     while order_id in presentOrders:
         order_id = random.randint(1000000000, 9999999999)
@@ -91,7 +91,7 @@ def checkout(user, cart):
     for i in range(len(cart)):
         query = QSqlQuery()
         check(query.prepare, createdb.INSERT_ORDERS_SQL)
-        createdb.add_order(query, order_id, user.get('username'), cart[i].get('ISBN'), dateString, 
+        createdb.add_order(query, order_id, user.get('username'), cart[i].get('ISBN'), dateString,
                            cart[i].get('quantity'))
         query = QSqlQuery('UPDATE BOOKS SET quantity = quantity - {q} WHERE ISBN = {isbn}'.format(q=cart[i].get('quantity'),isbn=cart[i].get('ISBN')))
         if (query.lastError().isValid()):
@@ -113,15 +113,13 @@ def checkout(user, cart):
             while(query2.next()):
                 publisher=dict(pub_name=query2.value(0), account_num=query2.value(1))
                 transfer_sale(book, publisher)
-    print("\nYour Order Details:\n")
-    print("Order ID: ", order_id)
+
+    message = "Your Order Details:\nOrder ID: {oid}\n\n".format(oid=order_id)
     for i in range(len(cart)):
-        print("Book title", cart[i].get('title'))
-        print("Book ISBN: ", cart[i].get('ISBN'))
-        print("Quantity: ", cart[i].get('quantity'))
-        print()
-
-
+        message += "Book title: {title}\nBook ISBN: {isbn}\nQuantity: {quantity}\n\n".format(title=cart[i].get('title'),
+                                                                                         isbn=cart[i].get('ISBN'),
+                                                                                         quantity=cart[i].get('quantity'))
+    return dict(error=False, data=message)
 def track_order(order_id):
     query = QSqlQuery('SELECT BOOKS.ISBN, BOOKS.title, ORDERS.order_id, ORDERS.quantity FROM \
                       ORDERS JOIN BOOKS WHERE ORDERS.order_id = {oid} AND BOOKS.ISBN=ORDERS.ISBN'.format(oid=order_id))
@@ -135,36 +133,36 @@ def track_order(order_id):
     return dict(error=False, data=orderDetails)
 
 
-def owner_add_publisher(publisher):         
+def owner_add_publisher(publisher):
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_PUBLISHERS_SQL)
-    createdb.add_publisher(query, publisher.get('pub_name'), publisher.get('address'), publisher.get('email'), 
+    return createdb.add_publisher(query, publisher.get('pub_name'), publisher.get('address'), publisher.get('email'),
                            publisher.get('account_num'), publisher.get('phone_num'))
 
 
 def owner_remove_publisher(publisher):
     pubName = '\'' + publisher.get('pub_name') + '\''
-    query = QSqlQuery('DROP FROM PUBLISHER WHERE pub_name = {name}'.format(name = pubName))
+    query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name = {name}'.format(name = pubName))
     if (query.lastError().isValid()):
         print("Error while removing: ", publisher.get('pub_name'))
         print(query.lastError())
         return dict(error=True, data="Error while removing {publisher}. Details: {details}".format(publisher = publisher.get('pub_name'), details=query.lastError().text()))
+    return dict(error=False, data="Publisher removed successfully")
 
-            
 def owner_add_book(book):
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_BOOKS_SQL)
-    createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
+    return createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
                              book.get('price'), book.get('quantity'), book.get('sale_percent'))
 
 
 def owner_remove_book(book):
-    query = QSqlQuery('DROP FROM BOOKS WHERE ISBN = {isbn}'.format(isbn = book.get('ISBN')))
+    query = QSqlQuery('DELETE FROM BOOKS WHERE ISBN = {isbn}'.format(isbn = book.get('ISBN')))
     if (query.lastError().isValid()):
         print("Error while removing book with: ", book.get('ISBN'))
         print(query.lastError())
         return dict(error=True, data="Error while removing book with: {isbn}. Details: {details}".format(isbn = book.get('ISBN'), details=query.lastError().text()))
-
+    return dict(error=False, data="Book removed successfully")
 
 def get_report(reportType, time):
     fig = plt.figure()
@@ -223,8 +221,8 @@ def get_report(reportType, time):
                 ax.set_title('Sales per Publisher from {syear} to {eyear}'.format(syear=time.get('start'),
                                                                                   eyear=time.get('end')))
         plt.show()
-        
-        
+
+
 def display_genre_report(time):
     #add time range - TODO
     genreSoldList = []
@@ -249,9 +247,9 @@ def display_genre_report(time):
         elif time.get('type') == 'Y':
             if int(str(query.value(1))[:4]) in askedYears:
                 genreSoldList.append(str(query.value(0)))
-    
+
     genreSoldPrice = np.zeros(len(genreSoldList))
- 
+
     query = QSqlQuery('SELECT genre, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
     if (query.lastError().isValid()):
         print("Error while retrieving genre orders")
@@ -262,10 +260,10 @@ def display_genre_report(time):
             if str(query.value(0)) == genreSoldList[i]:
                 genreSoldPrice[i] += query.value(1) * query.value(2)
                 break
-      
+
     return genreSoldPrice, genreSoldList
 
-                    
+
 def display_author_report(time):
     #add time range - TODO
     authorSoldList = []
@@ -289,9 +287,9 @@ def display_author_report(time):
         elif time.get('type') == 'Y':
             if int(str(query.value(1))[:4]) in askedYears:
                 authorSoldList.append(str(query.value(0)))
-    
+
     authorSoldPrice = np.zeros(len(authorSoldList))
-        
+
     query = QSqlQuery('SELECT author, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
     if (query.lastError().isValid()):
         print("Error while retrieving author orders")
@@ -308,7 +306,7 @@ def display_author_report(time):
 def view_similar_books(book):
     count = 0
     genreSimilar = '\'' + book.get('genre') + '\''
-    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = {g}'.format(g=genreSimilar)) 
+    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = {g}'.format(g=genreSimilar))
     if (query.lastError().isValid()):
         print("Error while retrieving similar books")
         print(query.lastError())
@@ -317,13 +315,13 @@ def view_similar_books(book):
     while (query.next()):
         if (count >= 3):
             break
-        if query.value(0) is not None and query.value(0) != book.get('ISBN'): 
+        if query.value(0) is not None and query.value(0) != book.get('ISBN'):
             similarBooks.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
                                  genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
         count += 1
     return dict(error=False, data=similarBooks)
 
-                    
+
 def display_pub_report(time):
     #add time range - TODO
     pubSoldList = []
@@ -347,9 +345,9 @@ def display_pub_report(time):
         elif time.get('type') == 'Y':
             if int(str(query.value(1))[:4]) in askedYears:
                 pubSoldList.append(str(query.value(0)))
-    
+
     pubSoldPrice = np.zeros(len(pubSoldList))
-        
+
     query = QSqlQuery('SELECT pub_name, price, ORDERS.quantity FROM BOOKS JOIN ORDERS on (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
     if (query.lastError().isValid()):
         print("Error while retrieving publisher orders")
@@ -360,9 +358,9 @@ def display_pub_report(time):
             if str(query.value(0)) == pubSoldList[i]:
                 pubSoldPrice[i] += query.value(1) * query.value(2)
                 break
-    return pubSoldPrice, pubSoldList        
-    
-                                    
+    return pubSoldPrice, pubSoldList
+
+
 def transfer_sale(book, publisher):
     query = QSqlQuery('SELECT price, sale_percent FROM BOOKS WHERE ISBN = {isbn}'.format(isbn=book.get('ISBN')))
     if (query.lastError().isValid()):
@@ -371,9 +369,9 @@ def transfer_sale(book, publisher):
         return dict(error=True, data="Error while transferring sales for {title}".format(title=book.get('title')))
     while (query.next()):
         amountTransfer = query.value(0) * (query.value(1)/100)
-    return dict(error=False, data="{book_title} by Publisher {pub_title} sold\n{money:.2f}$ transferred to A/C: {account}\n".format(book_title=book.get('title'), 
-                                                                                                                                    pub_title=publisher.get('pub_name'), 
-                                                                                                                                    money=amountTransfer, 
+    return dict(error=False, data="{book_title} by Publisher {pub_title} sold\n{money:.2f}$ transferred to A/C: {account}\n".format(book_title=book.get('title'),
+                                                                                                                                    pub_title=publisher.get('pub_name'),
+                                                                                                                                    money=amountTransfer,
                                                                                                                                     account=publisher.get('account_num')))
 
 def check_threshold(book):
