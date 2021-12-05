@@ -29,8 +29,7 @@ def login(user):
 
 
 def search(term, searchBy):
-     query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE ?=?')
-     query.addBindValue(searchBy)
+     query = QSqlQuery(f'SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searchBy}=?')
      query.addBindValue(term)
      query.exec()
      if (query.lastError().isValid()):
