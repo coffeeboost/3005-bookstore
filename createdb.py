@@ -86,6 +86,7 @@ def add_publisher(q, pub_name, address, email, account_num, phone_num):
         print("Error while inserting: ", pub_name)
         print(q.lastError())
         return dict(error=True, data="Error while inserting {publisher}. Details: {details}".format(publisher=pub_name, details=q.lastError().text()))
+    return dict(error=False, data="{pub} has been added successfully".format(pub=pub_name))
 
 def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity, sale_percent):
     q.addBindValue(isbn)
@@ -102,7 +103,8 @@ def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity
         print("Error while inserting: ", title)
         print(q.lastError())
         return dict(error=True, data="Error while inserting {book}. Details: {details}".format(book=title, details=q.lastError().text()))
-
+    return dict(error=False, data="{title} has been added successfully".format(title=title))
+    
 def add_user(q, username, password, billing_info, shipping_info):
     q.addBindValue(username)
     q.addBindValue(password)
@@ -113,6 +115,7 @@ def add_user(q, username, password, billing_info, shipping_info):
         print("Error while inserting: ", username)
         print(q.lastError())
         return dict(error=True, data="Error while inserting {uname}. Details: {details}".format(uname=username, details=q.lastError().text()))
+    return dict(error=False, data="{uname} has been added successfully".format(uname=username))
 
 def add_order(q, order_id, username, ISBN, order_date, quantity):
     q.addBindValue(order_id)
