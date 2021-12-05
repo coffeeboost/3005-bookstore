@@ -277,7 +277,7 @@ def display_author_report(time):
         startYear = time.get('start')
         endYear = time.get('end')
         askedYears = list(range(startYear, endYear+1))
-    query = QSqlQuery('SELECT DISTINCT author FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    query = QSqlQuery('SELECT DISTINCT author, order_date FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
     if (query.lastError().isValid()):
         print("Error while retrieving authors")
         print(query.lastError())
@@ -335,7 +335,7 @@ def display_pub_report(time):
         startYear = time.get('start')
         endYear = time.get('end')
         askedYears = list(range(startYear, endYear+1))
-    query = QSqlQuery('SELECT DISTINCT pub_name FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
+    query = QSqlQuery('SELECT DISTINCT pub_name, order_date FROM BOOKS JOIN ORDERS ON (ORDERS.ISBN) WHERE BOOKS.ISBN = ORDERS.ISBN')
     if (query.lastError().isValid()):
         print("Error while retrieving publishers")
         print(query.lastError())
