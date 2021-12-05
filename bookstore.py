@@ -27,13 +27,13 @@ class BookstoreWidget(QWidget):
 
         self.connect_order_windows()
         self.connect_admin_windows()
-        self.create_search_layout()
+        self.connect_dev_window()
         self.create_books_layout()
         self.create_cart_layout()
-        self.connect_dev_window()
+        self.create_search_layout()
 
         self.left_layout = QVBoxLayout()
-        # self.left_layout.addWidget(self.open_devW_button) #developer only
+        # self.left_layout.addWidget(self.open_devW_button) #development mode
         self.left_layout.addWidget(self.open_orderW_button)
         self.left_layout.addWidget(self.open_adminW_button)
         self.refresh_button = QPushButton("refresh button")
@@ -93,6 +93,14 @@ class BookstoreWidget(QWidget):
     def create_search_layout(self):
         self.completer = QLineEdit()
 
+        titles = []
+        for row in range(self.model.rowCount()):
+            titles.append(str(self.model.data(self.model.index(row, 1))))
+
+        completer = QCompleter(titles)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setCompleter(completer)
+
         cs1 = QRadioButton ("Author")
         cs2 = QRadioButton ("Genre")
         cs3 = QRadioButton ("Publisher")
@@ -133,7 +141,7 @@ class BookstoreWidget(QWidget):
         self.cart_widget = QTableWidget()
         self.cart_widget.setColumnCount(3)
         self.cart_widget.setHorizontalHeaderLabels(["ISBN", "title", "count"])
-        self.create_username_form()
+        self.create_username_billing_shipping_form()
         self.create_checkout_button_widget()
 
         max_width = 300
@@ -151,12 +159,16 @@ class BookstoreWidget(QWidget):
         self.similar_button = QPushButton("View similar book")
         self.similar_button.clicked.connect(self.view_similar_books_handler)
 
-    def create_username_form(self):
+    def create_username_billing_shipping_form(self):
         self.form = QGroupBox()
         layout = QFormLayout()
-        self.form.setLayout(layout)
         self.username_line_edit = QLineEdit()
+        self.billing_line_edit = QLineEdit()
+        self.shipping_line_edit = QLineEdit()
         layout.addRow(QLabel("Username:"), self.username_line_edit)
+        layout.addRow(QLabel("Billing:"), self.billing_line_edit)
+        layout.addRow(QLabel("Shipping:"), self.shipping_line_edit)
+        self.form.setLayout(layout)
 
     def create_book_info_widget(self):
         self.info_book = QDialog()
@@ -207,7 +219,9 @@ class BookstoreWidget(QWidget):
         self.updated_book = True
 
     def check_out_handler(self):
-        res = backend_functions.checkout(dict(username=self.username_line_edit.text()),self.cart)
+        res = backend_functions.checkout(dict(username=self.username_line_edit.text(),
+                                        billing=self.billing_line_edit.text(),
+                                        shipping=self.shipping_line_edit.text()),self.cart)
         if res["error"]:
             self.display_error(res["data"])
         else:

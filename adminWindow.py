@@ -33,7 +33,7 @@ class AdminWindow(QWidget):
         self.setWindowTitle("Admin Window")
         self.setMinimumHeight(600)
         scroll.setWidget(scrollContent)
-s
+
         cs1 = QRadioButton ("Sales per genre")
         cs2 = QRadioButton ("Sales per author")
         cs3 = QRadioButton ("Sales per publisher")
