@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDialog,
                                QMenu, QMenuBar, QPushButton, QSpinBox,
                                QTextEdit, QVBoxLayout, QWidget, QTableView, QTableWidget,
                                QTableWidgetItem, QAbstractItemView, QHeaderView,
-                               QMainWindow, QCompleter, QLineEdit)
+                               QMainWindow, QCompleter, QLineEdit, QRadioButton, QButtonGroup)
 from PySide6.QtCore import QObject, Qt, QSize, QTimer
 from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
@@ -38,12 +38,32 @@ class BookstoreWidget(QWidget):
         self.connect_order_windows()
         self.connect_admin_windows() #TODO
 
+        cs1 = QRadioButton ("Author")
+        cs2 = QRadioButton ("Genre")
+        cs3 = QRadioButton ("Publisher")
+
+        #Create a key group and add keys
+        self.cs_group = QButtonGroup()
+        self.cs_group.addButton(cs1)
+        self.cs_group.addButton(cs2)
+        self.cs_group.addButton(cs3)
 
         self.mid_layout.addWidget(self.completer)
+        self.mid_layout.addWidget(cs1)
+        self.mid_layout.addWidget(cs2)
+        self.mid_layout.addWidget(cs3)
+        self.search_button = QPushButton("Search")
+        self.search_button.clicked.connect(self.handler_search)
+        # self.mid_layout.addWidget(QRadioButton ("small cup"))
+        self.mid_layout.addWidget(self.search_button)
         self.mid_layout.addWidget(QLabel("Books Table"))
         self.mid_layout.addWidget(self.book_view)
         self.mid_layout.addWidget(self.info_book)
         self.mid_layout.addWidget(self.button_cart)
+        self.mid_layout.addStretch()
+        self.similar_button = QPushButton("View similar book")
+        self.mid_layout.addWidget(self.similar_button)
+        self.similar_button.clicked.connect(self.handler_view_similar_book)
         self.right_layout.addLayout(self.cart_layout)
         self.left_layout.addWidget(self.dev_but)
         self.left_layout.addWidget(self.order_but)
@@ -52,7 +72,21 @@ class BookstoreWidget(QWidget):
         self.main_layout.addLayout(self.mid_layout)
         self.main_layout.addLayout(self.right_layout)
         self.setLayout(self.main_layout)
+    def handler_search(self):
+        # print(self.cs_group.checkedButton().text())
+        # print(self.completer.text())
+        search_by = self.cs_group.checkedButton().text().lower()
+        keyword = self.completer.text()
+        keyword = " ".join([w.capitalize() for w in keyword.split(" ")])
+        print(search_by)
+        print(keyword)
+        matched = backend_functions.search(keyword, search_by)
 
+        print(matched)
+    def handler_view_similar_book(self):
+        # self.similar
+        for book in self.similar:
+            print("ISBN: ", book["ISBN"], " Title: ", book["title"])
     def connect_admin_windows(self):
         self.adminw = None
         self.admin_but = QPushButton("open admin window")
@@ -94,14 +128,15 @@ class BookstoreWidget(QWidget):
         self.cart_widget = QTableWidget()
         self.cart_widget.setColumnCount(3)
         self.cart_widget.setHorizontalHeaderLabels(["ISBN", "title", "count"])
+        # self.cart_widget.setWordWrap(True)
 
         self.form = QGroupBox() #refactor
         layout = QFormLayout()
         self.form.setLayout(layout)
         self.username_line_edit = QLineEdit()
         layout.addRow(QLabel("Username:"), self.username_line_edit)
-        self.username_button = QDialogButtonBox(QDialogButtonBox.Ok)
-        self.username_button.accepted.connect(self.handlerA)
+        self.username_button = QPushButton("Checkout")
+        self.username_button.clicked.connect(self.handlerA)
 
 
         self.cart_layout.addWidget(QLabel("Checkout Cart"))
@@ -109,8 +144,10 @@ class BookstoreWidget(QWidget):
         self.cart_layout.addWidget(self.form)
         self.cart_layout.addWidget(self.username_button)
 
+
     def handlerA(self):
-        print(self.username_line_edit.text())
+        backend_functions.checkout(dict(username=self.username_line_edit.text()),self.cart)
+
 
     def create_book_info_widget(self):
         self.info_book = QDialog()
@@ -123,7 +160,7 @@ class BookstoreWidget(QWidget):
         info_layout.addWidget(QLabel("num_pages:"))
         info_layout.addWidget(QLabel("price:"))
         info_layout.addWidget(QLabel("quantity:"))
-        info_layout.addWidget(QLabel("sale_percent:"))
+        # info_layout.addWidget(QLabel("sale_percent:"))
         self.info_book.setLayout(info_layout)
 
     def create_cart_button_widget(self):
@@ -163,6 +200,7 @@ class BookstoreWidget(QWidget):
         view.setSelectionBehavior(QAbstractItemView.SelectRows)
         view.setSelectionMode(QAbstractItemView.SingleSelection)
         view.selectionModel().currentRowChanged.connect(self.display_book_info_handler)
+        view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         return view
 
     def create_model(self, name):
@@ -175,6 +213,7 @@ class BookstoreWidget(QWidget):
         selected_row = curr.row()
 
         model = self.book_view.model()
+
         self.ISBN = str(model.data(model.index(selected_row, 0)))
         self.title = model.data(model.index(selected_row, 1))
         self.author = model.data(model.index(selected_row, 2))
@@ -183,7 +222,6 @@ class BookstoreWidget(QWidget):
         self.num_pages = str(model.data(model.index(selected_row, 5)))
         self.price = str(model.data(model.index(selected_row, 6)))
         self.quantity = str(model.data(model.index(selected_row, 7)))
-        self.sale_percent = str(model.data(model.index(selected_row, 8)))
 
         layout = self.info_book.layout()
 
@@ -195,12 +233,13 @@ class BookstoreWidget(QWidget):
         layout.itemAt(5).widget().setText("num_pages: " + self.num_pages)
         layout.itemAt(6).widget().setText("price: " + self.price)
         layout.itemAt(7).widget().setText("quantity: " + self.quantity)
-        layout.itemAt(8).widget().setText("sale_percent: " + self.sale_percent)
 
         self.updated_book = True
 
+        self.similar = backend_functions.view_similar_books(dict(ISBN=int(self.ISBN),genre=self.genre))
+
     def check_out_handler(self):
-        backend_functions.checkout(dict(username="gordontang"), self.cart, self.username)
+        backend_functions.checkout(dict(username=self.username), self.cart)
 
     def add_to_cart_handler(self):
         if not self.updated_book:
@@ -209,7 +248,7 @@ class BookstoreWidget(QWidget):
         book = {
             "ISBN":int(self.ISBN),
             "title":self.title,
-            "count":1
+            "quantity":1
         }
         #  and self.is_below_threshold(book)
         if self.book_is_in_cart(book):
@@ -239,8 +278,8 @@ class BookstoreWidget(QWidget):
         count = 0
         for b in self.cart:
             if b.get("ISBN") == book.get("ISBN"):
-                b["count"] += 1
-                count = b["count"]
+                b["quantity"] += 1
+                count = b["quantity"]
         return count
 
     def is_below_threshold(book):
@@ -251,5 +290,6 @@ class BookstoreWindow(QMainWindow):
         super(BookstoreWindow, self).__init__()
         widget = BookstoreWidget()
         self.setCentralWidget(widget)
-        self.setWindowTitle("Bookstore Window")
-        self.setMinimumWidth(1000)
+        self.setWindowTitle("Look Inna Book")
+        self.setMinimumWidth(1100)
+        self.setMinimumHeight(600)
