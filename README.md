@@ -4,7 +4,7 @@
 `/SQL` - contains DDL and SQL queries\
 `main.py` - entry point to program\
 `requirement.txt` - list pip requirements\
-`bookstore.py` - generates main window for this app\
+`bookstore.py` - main window for this app\
 `adminWindow.py` - admin window\
 `devWindow.py` - developer window\
 `order_summary.py` - track order window\
