@@ -49,7 +49,6 @@ def checkout(user, cart):
         return dict(error=True, data="Invalid username")
 
     if (len(cart) == 0):
-        #print("Nothing present in cart")
         return dict(error=True, data="Nothing present in cart")
     presentOrders = []
     query = QSqlQuery('SELECT order_id FROM ORDERS')
