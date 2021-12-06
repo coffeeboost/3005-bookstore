@@ -45,6 +45,7 @@ def search(term, searchBy):
 
 
 def checkout(user, cart):
+    #return threshold, transfer_sale messages
     if not login(user):
         return dict(error=True, data="Invalid username")
 
@@ -70,6 +71,8 @@ def checkout(user, cart):
     if len(str(now.day)) == 1:
         day = '0' + day
     dateString = year + '-' + month + '-' + day
+    checkThresholdMessage = ""
+    transferSaleMessage = ""
     for i in range(len(cart)):
         query = QSqlQuery()
         check(query.prepare, createdb.INSERT_ORDERS_SQL)
@@ -83,7 +86,7 @@ def checkout(user, cart):
             print("Error while changing quantity of books")
             print(query.lastError())
             return dict(error=True, data="Error while changing quantity of books. Details: {details}".format(details=query.lastError().text()))
-        query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price, quantity FROM BOOKS WHERE ISBN =?')
+        query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price, quantity FROM BOOKS WHERE ISBN = ?')
         query.addBindValue(cart[i].get('ISBN'))
         query.exec()
         if (query.lastError().isValid()):
@@ -95,19 +98,26 @@ def checkout(user, cart):
                   pub_name=str(query.value(3)), genre=str(query.value(4)), num_pages=query.value(5),
                   price=query.value(6), quantity=query.value(7))
             if (query.value(7) < THRESHOLD_VALUE):
-                check_threshold(book)
+                res = check_threshold(book)
+                if res["error"]:
+                    return res
+                checkThresholdMessage = res["data"]
             query2 = QSqlQuery('SELECT BOOKS.pub_name, account_num from BOOKS NATURAL JOIN PUBLISHERS WHERE BOOKS.ISBN = ?')
             query2.addBindValue(cart[i].get('ISBN'))
             query2.exec()
             while(query2.next()):
                 publisher=dict(pub_name=query2.value(0), account_num=query2.value(1))
-                transfer_sale(book, publisher, cart[i].get('quantity'))
+                res = transfer_sale(book, publisher, cart[i].get('quantity'))
+                if res["error"]:
+                    return res
+                transferSaleMessage = res["data"]
 
     message = "Your Order Details:\nOrder ID: {oid}\n\n".format(oid=order_id)
     for i in range(len(cart)):
         message += "Book title: {title}\nBook ISBN: {isbn}\nQuantity: {quantity}\n\n".format(title=cart[i].get('title'),
                                                                                          isbn=cart[i].get('ISBN'),
                                                                                          quantity=cart[i].get('quantity'))
+    message += checkThresholdMessage + "\n\n" + transferSaleMessage
     return dict(error=False, data=message)
 
 
@@ -134,7 +144,7 @@ def owner_add_publisher(publisher):
 
 
 def owner_remove_publisher(publisher):
-    query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name=?')
+    query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name = ?')
     query.addBindValue(publisher.get('pub_name'))
     query.exec()
     if (query.lastError().isValid()):
@@ -159,6 +169,7 @@ def owner_remove_book(book):
         print(query.lastError())
         return dict(error=True, data="Error while removing book with: {isbn}. Details: {details}".format(isbn = book.get('ISBN'), details=query.lastError().text()))
     return dict(error=False, data="Book removed successfully")
+
 
 def get_report(reportType, time):
     fig = plt.figure()
@@ -401,3 +412,4 @@ def check_threshold(book):
                saleCount += query.value(0)
 
     return dict(error=False, data='Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
+  
