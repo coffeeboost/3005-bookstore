@@ -141,6 +141,7 @@ class BookstoreWidget(QWidget):
         self.cart_widget = QTableWidget()
         self.cart_widget.setColumnCount(3)
         self.cart_widget.setHorizontalHeaderLabels(["ISBN", "title", "count"])
+        self.cart_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.create_username_billing_shipping_form()
         self.create_checkout_button_widget()
 
