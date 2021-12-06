@@ -14,3 +14,6 @@
 # How to use
 - ensure you have the pip requirements and you are suggested to work in a virtual environemnt
 - run `python main.py`
+
+# Product architecture
+![product architecture](img/architecture.jpg)
