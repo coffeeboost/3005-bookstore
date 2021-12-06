@@ -21,6 +21,7 @@ class OrderSummaryWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.order_widget = QTableWidget()
+        self.order_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.order_widget.setColumnCount(4)
         self.order_widget.setHorizontalHeaderLabels(["ISBN", "title", "quantity", "status"])
         self.button_order = QPushButton("Track order")
