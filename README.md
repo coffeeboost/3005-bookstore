@@ -54,7 +54,7 @@
 -  From the left panel, click on the admin window button and remove a book by its ISBN
 -  From the left panel, click on the admin window button and add publisher and a new name. This is needed for foreign contraint checks.
 -  From the left panel, click on the admin window button and remove publisher by name.
--  -  From the left panel, click on the admin window button and generate report. Enter a month range (our dummy data is in Nov/Dec), and a type of report. A new window with graphs should appear.
+-  From the left panel, click on the admin window button and generate report. Enter a month range (our dummy data is in Nov/Dec), and a type of report. A new window with graphs should appear.
 
 # Known bugs
 - you must toggle admin/track window with the button, press x closes the window but you have to press twice to open the window again
