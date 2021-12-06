@@ -29,6 +29,7 @@
 - right panel (top) has the current cart
 - right panel (bottom) has user input areas and a checkout button
 
+## admin window
 <img src="img/admin.png" width="500">
 
 - scrollable window where the admin can:
@@ -38,6 +39,8 @@
 - remove publisher
 - generate custom report based on monthly time range
 - report types are: sales per genre, sales per author, sales per publisher
+
+## track order window
 <img src="img/track.png" width="500">
 
 - enter a order id to track it's shipping status and order information
