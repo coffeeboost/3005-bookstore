@@ -63,5 +63,9 @@
 1.  From the left panel, click on the admin window button and remove publisher by name.
 1.  From the left panel, click on the admin window button and generate report. Enter a month range (our dummy data is in Nov/Dec), and a type of report. A new window with graphs should appear.
 
+## dev window
+<img src="img/dev_window.png" width="500">
+1. Monitor changes in database
+
 # Known bugs
 - you must toggle admin/track window with the button, press x closes the window but you have to press twice to open the window again
