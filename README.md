@@ -23,7 +23,7 @@
 ## UI overview
 <img src="img/ui_architecture.png" width="500">
 
-## bookstore window
+## bookstore (users) window
 <img src="img/bookstore.png" width="500">
 
 - left panel connects admin window, refresh button, track order window
