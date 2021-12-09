@@ -8,11 +8,8 @@ import sys
 if __name__ == '__main__':
     init_db()
     app = QApplication(sys.argv)
+
     main = BookstoreWindow()
-
-
-    # temp = DevWindow()
-    # temp.show()
     main.show()
 
     sys.exit(app.exec())
