@@ -33,7 +33,7 @@ class BookstoreWidget(QWidget):
         self.create_search_layout()
 
         self.left_layout = QVBoxLayout()
-        # self.left_layout.addWidget(self.open_devW_button) #development mode
+        self.left_layout.addWidget(self.open_devW_button) #development mode
         self.left_layout.addWidget(self.open_orderW_button)
         self.left_layout.addWidget(self.open_adminW_button)
         self.refresh_button = QPushButton("refresh button")

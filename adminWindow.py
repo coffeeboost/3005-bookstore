@@ -77,7 +77,13 @@ class AdminWindow(QWidget):
 
         self.isbn_le_rm = QLineEdit()
         self.pub_le_rm = QLineEdit()
-        self.pub_le_add = QLineEdit()
+
+        self.pub_le_add_name = QLineEdit()
+        self.pub_le_add_address = QLineEdit()
+        self.pub_le_add_email = QLineEdit()
+        self.pub_le_add_account_num = QLineEdit()
+        self.pub_le_add_phone_num = QLineEdit()
+
 
         self.form = QGroupBox()
         layout = QFormLayout()
@@ -100,7 +106,11 @@ class AdminWindow(QWidget):
 
         self.form_add_publisher = QGroupBox()
         temp1 = QFormLayout()
-        temp1.addRow(QLabel("Publisher name:"), self.pub_le_add)
+        temp1.addRow(QLabel("Publisher name:"), self.pub_le_add_name)
+        temp1.addRow(QLabel("Publisher address:"), self.pub_le_add_address)
+        temp1.addRow(QLabel("Publisher email:"), self.pub_le_add_email)
+        temp1.addRow(QLabel("Publisher account number:"), self.pub_le_add_account_num)
+        temp1.addRow(QLabel("Publisher phone number:"), self.pub_le_add_phone_num)
         self.form_add_publisher.setLayout(temp1)
 
         self.form_remove_publisheer = QGroupBox()
@@ -130,15 +140,32 @@ class AdminWindow(QWidget):
 
     def remove_publisher_handler(self):
         pub_name = self.pub_le_rm.text()
-        res = backend_functions.owner_add_publisher(pub_name)
+        res = backend_functions.owner_remove_publisher(pub_name)
         self.display_message(res["data"])
         self.pub_le_rm.setText("")
 
     def add_publisher_handler(self):
-        pub_name = self.pub_le_add.text()
-        res = backend_functions.owner_remove_publisher(pub_name)
+        pub_name = self.pub_le_add_name.text()
+        pub_address = self.pub_le_add_address.text()
+        pub_email = self.pub_le_add_email.text()
+        pub_account_num = self.pub_le_add_account_num.text()
+        pub_phone_num = self.pub_le_add_phone_num.text()
+
+        pub = {
+            "pub_name":pub_name,
+            "address":pub_address,
+            "email":pub_email,
+            "account_num":pub_account_num,
+            "phone_num":pub_phone_num
+        }
+
+        res = backend_functions.owner_add_publisher(pub)
         self.display_message(res["data"])
-        self.pub_le_add.setText("")
+        self.pub_le_add_name.setText("")
+        self.pub_le_add_address.setText("")
+        self.pub_le_add_email.setText("")
+        self.pub_le_add_account_num.setText("")
+        self.pub_le_add_phone_num.setText("")
 
     def owner_add_book_handler(self):
         book = {

@@ -13,13 +13,16 @@
 
 # How to use
 - ensure you have the pip requirements and you are suggested to work in a virtual environment
-- You can install the required dependencies by running `pip install -r requirement.txt`. pip expects relative path to requirement.txt 
+- You can install the required dependencies by running `pip install -r requirement.txt`. pip expects relative path to requirement.txt
 - run `python main.py`
 
 # Product architecture
 <img src="img/architecture.jpg" width="500">
 
 # Product workflow
+## UI overview
+<img src="img/ui_architecture.png" width="500">
+
 ## bookstore window
 <img src="img/bookstore.png" width="500">
 
