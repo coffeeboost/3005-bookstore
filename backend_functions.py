@@ -2,7 +2,7 @@ from PySide6.QtSql import QSqlDatabase, QSqlQuery
 from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
 import createdb
-from datetime import date, datetime
+from datetime import datetime
 import random
 from createdb import check
 import matplotlib.pyplot as plt
@@ -13,6 +13,14 @@ THRESHOLD_VALUE = 5
 
 
 def login(user):
+    """
+    login checks if a user is registered in the bookstore.
+
+    :param user: a dictionary with the username provided 
+    :return: True if user exists, False if user does not exist or 
+    issue gathering information from the database
+    """ 
+    
     count = 0
     query = QSqlQuery('SELECT username, password FROM USERS WHERE username = ?')
     query.addBindValue(user.get('username'))
@@ -29,23 +37,74 @@ def login(user):
 
 
 def search(term, searchBy):
-     query = QSqlQuery(f'SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searchBy}=?')
-     query.addBindValue(term)
-     query.exec()
-     if (query.lastError().isValid()):
-        print("Error while searching")
-        print(query.lastError())
-        return dict(error=True, data="Error while searching: {text}".format(text=query.lastError().text()))
-     searchResults = []
-     while (query.next()):
-        searchResults.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
-                                 genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
-     return dict(error=False, data=searchResults)
+    """
+    search searches the database for a particular book.
 
+    :param term: the search term
+    :param searchBy: the category to search in (i.e., author, publisher, genre, etc.)
+    :return: {
+                error = True/False
+                data = Error message/Results of search
+             }
+    """ 
+    
+    query = QSqlQuery(f'SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE {searchBy}=?')
+    query.addBindValue(term)
+    query.exec()
+    if (query.lastError().isValid()):
+       print("Error while searching")
+       print(query.lastError())
+       return dict(error=True, data="Error while searching: {text}".format(text=query.lastError().text()))
+    searchResults = []
+    while (query.next()):
+       searchResults.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
+                                genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
+    return dict(error=False, data=searchResults)
+
+
+def view_similar_books(book):
+    """
+    view_similar_books shows books matching the genre of the current book being viewed.
+
+    :param book: a dictionary with the relevant information about the current book being viewed 
+    :return: {
+                error = True/False
+                data = Error message/Information about similar books
+             }
+    """ 
+    
+    count = 0
+    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = ?')
+    query.addBindValue(book.get('genre'))
+    query.exec()
+    if (query.lastError().isValid()):
+        print("Error while retrieving similar books")
+        print(query.lastError())
+        return dict(error=True, data="Error while retrieving similar books. Details: {details}".format(details=query.lastError().text()))
+    similarBooks = []
+    while (query.next()):
+        if (count >= 3):
+            break
+        if query.value(0) is not None and query.value(0) != book.get('ISBN'):
+            similarBooks.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
+                                 genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
+        count += 1
+    return dict(error=False, data=similarBooks)
 
 
 def checkout(user, cart):
-    #return threshold, transfer_sale messages
+    """
+    checkout creates a new order for the user with all items present in the cart.
+
+    :param user: a dictionary with the username provided 
+    :param cart: a list of dictionaries. Each dictionary contains the ISBN, title, 
+                 and number of that specific book in the cart
+    :return: {
+                error = True/False
+                data = Error message/Details about order (order_id, book details, etc.)
+             }
+    """ 
+    
     if not login(user):
         return dict(error=True, data="Invalid username")
 
@@ -122,6 +181,16 @@ def checkout(user, cart):
 
 
 def track_order(order_id):
+    """
+    track_order finds the order details matching the order_id and displays shipping information.
+
+    :param order_id: the order_id to search for
+    :return: {
+                error = True/False
+                data = Error message/Details about order matching order_id
+             }
+    """ 
+    
     query = QSqlQuery('SELECT BOOKS.ISBN, BOOKS.title, ORDERS.order_id, ORDERS.quantity FROM \
                       ORDERS JOIN BOOKS WHERE ORDERS.order_id = ? AND BOOKS.ISBN=ORDERS.ISBN')
     query.addBindValue(order_id)
@@ -137,6 +206,16 @@ def track_order(order_id):
 
 
 def owner_add_publisher(publisher):
+    """
+    owner_add_publisher adds a new publisher to the database.
+
+    :param publisher: a dictionary with all relevant information about new publisher
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_PUBLISHERS_SQL)
     return createdb.add_publisher(query, publisher.get('pub_name'), publisher.get('address'), publisher.get('email'),
@@ -144,6 +223,16 @@ def owner_add_publisher(publisher):
 
 
 def owner_remove_publisher(publisher):
+    """
+    owner_remove_publisher removes an existing publisher from the database.
+
+    :param publisher: a dictionary with publisher name
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     query = QSqlQuery('DELETE FROM PUBLISHER WHERE pub_name = ?')
     query.addBindValue(publisher.get('pub_name'))
     query.exec()
@@ -154,6 +243,16 @@ def owner_remove_publisher(publisher):
     return dict(error=False, data="Publisher removed successfully")
 
 def owner_add_book(book):
+    """
+    owner_add_book adds a new publisher to the database.
+
+    :param book: a dictionary with all relevant information about new book
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     query = QSqlQuery()
     check(query.prepare, createdb.INSERT_BOOKS_SQL)
     return createdb.add_book(query, book.get('ISBN'), book.get('title'), book.get('author'), book.get('pub_name'), book.get('genre'), book.get('num_pages'),
@@ -161,6 +260,16 @@ def owner_add_book(book):
 
 
 def owner_remove_book(book):
+    """
+    owner_remove_book removes an existing book from the database.
+
+    :param book: a dictionary with ISBN of the book to be removed
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     query = QSqlQuery('DELETE FROM BOOKS WHERE ISBN = ?')
     query.addBindValue(book.get('ISBN'))
     query.exec()
@@ -172,6 +281,16 @@ def owner_remove_book(book):
 
 
 def get_report(reportType, time):
+    """
+    get_report gets reports according to specified reportType over a period of time.
+
+    :param reportType: a string representing the sort of report wanted (sales per genre, publisher, etc.)
+    :param time: a dictionary specifying the time period (month/year), the start and end month/year
+    :return: None
+    
+    The function opens a new window to visually display the reports 
+    """
+    
     fig = plt.figure()
     ax = fig.add_subplot(111)
     if reportType == 'genre':
@@ -231,7 +350,13 @@ def get_report(reportType, time):
 
 
 def display_genre_report(time):
-    #add time range - TODO
+    """
+    display_genre_report returns the report of sales per genre.
+
+    :param time: a dictionary specifying the time period (month/year), the start and end month/year
+    :return: list of distinct genres, list of sales per each genre
+    """
+    
     genreSoldList = []
     if time.get('type') == 'M':
         startMonth = time.get('start')
@@ -272,7 +397,13 @@ def display_genre_report(time):
 
 
 def display_author_report(time):
-    #add time range - TODO
+    """
+    display_author_report returns the report of sales per author.
+
+    :param time: a dictionary specifying the time period (month/year), the start and end month/year
+    :return: list of distinct authors, list of sales per author
+    """
+    
     authorSoldList = []
     if time.get('type') == 'M':
         startMonth = time.get('start')
@@ -310,28 +441,14 @@ def display_author_report(time):
     return authorSoldPrice, authorSoldList
 
 
-def view_similar_books(book):
-    count = 0
-    query = QSqlQuery('SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM BOOKS WHERE genre = ?')
-    query.addBindValue(book.get('genre'))
-    query.exec()
-    if (query.lastError().isValid()):
-        print("Error while retrieving similar books")
-        print(query.lastError())
-        return dict(error=True, data="Error while retrieving similar books. Details: {details}".format(details=query.lastError().text()))
-    similarBooks = []
-    while (query.next()):
-        if (count >= 3):
-            break
-        if query.value(0) is not None and query.value(0) != book.get('ISBN'):
-            similarBooks.append(dict(ISBN=query.value(0), title=str(query.value(1)), author=str(query.value(2)), pub_name=str(query.value(3)),
-                                 genre=str(query.value(4)), num_pages=query.value(5), price=query.value(6)))
-        count += 1
-    return dict(error=False, data=similarBooks)
-
-
 def display_pub_report(time):
-    #add time range - TODO
+    """
+    display_pub_report returns the report of sales per publisher.
+
+    :param time: a dictionary specifying the time period (month/year), the start and end month/year
+    :return: list of distinct publishers, list of sales per publisher
+    """
+    
     pubSoldList = []
     if time.get('type') == 'M':
         startMonth = time.get('start')
@@ -370,6 +487,18 @@ def display_pub_report(time):
 
 
 def transfer_sale(book, publisher, quantity):
+    """
+    transfer_sale transfers a certain amount of money to the publisher of the book each time a book is sold.
+
+    :param book: a dictionary containing the ISBN and title of the book being sold
+    :param publisher: a dictionary containing the name and account_num of the publisher of the book being sold
+    :param quantity: an integer representing the number of times this book was sold during one checkout
+    :return: {
+                error = True/False
+                data = Error message/Message stating that correct amount of money has been transferred to publisher 
+             }
+    """
+    
     query = QSqlQuery('SELECT price, sale_percent FROM BOOKS WHERE ISBN = ?')
     query.addBindValue(book.get('ISBN'))
     query.exec()
@@ -385,6 +514,17 @@ def transfer_sale(book, publisher, quantity):
                                                                                                                                     account=publisher.get('account_num')))
 
 def check_threshold(book):
+    """
+    check_threshold checks if the current book has fallen below the THRESHOLD_VALUE.
+
+    :param book: a dictionary containing the ISBN, title, and pub_name of the book being sold
+    :return: {
+                error = True/False
+                data = Error message/Message stating that an email has been sent to publisher to order
+                       books equal to the number of times this book was sold in the current/last month
+             }
+    """
+    
     query = QSqlQuery('SELECT quantity, order_date FROM ORDERS WHERE ISBN = ?')
     query.addBindValue(book.get('ISBN'))
     query.exec()
@@ -412,4 +552,3 @@ def check_threshold(book):
                saleCount += query.value(0)
 
     return dict(error=False, data='Email sent to {publisher} to order {sales} {book_name} books'.format(publisher=book.get('pub_name'), sales=saleCount, book_name=book.get('title')))
-  
