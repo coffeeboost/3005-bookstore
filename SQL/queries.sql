@@ -3,9 +3,9 @@ checks if user exists
 */
 SELECT username, password FROM USERS WHERE username = ?
 /*
-search books where genre matches x
+search books where genre/author/publisher matches x. genre in the WHERE clause can be replaced by author or publisher
 */
-SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE ?=?
+SELECT ISBN, title, author, pub_name, genre, num_pages, price FROM books WHERE genre=?
 /*
 select all orders
 */
