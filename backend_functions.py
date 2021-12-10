@@ -160,7 +160,7 @@ def checkout(user, cart):
                 res = check_threshold(book)
                 if res["error"]:
                     return res
-                checkThresholdMessage = res["data"]
+                checkThresholdMessage += res["data"]
             query2 = QSqlQuery('SELECT BOOKS.pub_name, account_num from BOOKS NATURAL JOIN PUBLISHERS WHERE BOOKS.ISBN = ?')
             query2.addBindValue(cart[i].get('ISBN'))
             query2.exec()
@@ -169,7 +169,7 @@ def checkout(user, cart):
                 res = transfer_sale(book, publisher, cart[i].get('quantity'))
                 if res["error"]:
                     return res
-                transferSaleMessage = res["data"]
+                transferSaleMessage += res["data"]
 
     message = "Your Order Details:\nOrder ID: {oid}\n\n".format(oid=order_id)
     for i in range(len(cart)):
