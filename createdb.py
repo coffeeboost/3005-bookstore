@@ -1,7 +1,6 @@
 from PySide6.QtSql import QSqlDatabase, QSqlQuery
 from PySide6.QtSql import (QSqlQuery, QSqlRelation, QSqlRelationalDelegate,
                            QSqlRelationalTableModel)
-from datetime import date, datetime
 
 PUBLISHERS_SQL = """
 CREATE TABLE PUBLISHERS
@@ -76,6 +75,21 @@ values(?, ?, ?, ?, ?)
 
 
 def add_publisher(q, pub_name, address, email, account_num, phone_num):
+    """
+    add_publisher prepares a query to add a new publisher to the database.
+
+    :param q: the current query being prepared
+    :param pub_name: the name of the publisher
+    :param address: the address of the publisher
+    :param email: the email of the publisher
+    :param account_num: the account number of the publisher
+    :param phone_num: the phone number of the publisher
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     q.addBindValue(pub_name)
     q.addBindValue(address)
     q.addBindValue(email)
@@ -88,7 +102,27 @@ def add_publisher(q, pub_name, address, email, account_num, phone_num):
         return dict(error=True, data="Error while inserting {publisher}. Details: {details}".format(publisher=pub_name, details=q.lastError().text()))
     return dict(error=False, data="{pub} has been added successfully".format(pub=pub_name))
 
+
 def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity, sale_percent):
+    """
+    add_book prepares a query to add a new book to the database.
+
+    :param q: the current query being prepared
+    :param isbn: the isbn of the book
+    :param title: the title of the book
+    :param author: the author of the book
+    :param pub_name: the publisher name of the book
+    :param genre: the genre of the book
+    :param num_pages: the number of pages of the book
+    :param price: the price of the book
+    :param quantity: the quantity of the book
+    :param sale_percent: the percent of sale that will go to publisher when this book is sold
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     q.addBindValue(isbn)
     q.addBindValue(title)
     q.addBindValue(author)
@@ -104,8 +138,23 @@ def add_book(q, isbn, title, author, pub_name, genre, num_pages, price, quantity
         print(q.lastError())
         return dict(error=True, data="Error while inserting {book}. Details: {details}".format(book=title, details=q.lastError().text()))
     return dict(error=False, data="{title} has been added successfully".format(title=title))
-    
+  
+  
 def add_user(q, username, password, billing_info, shipping_info):
+    """
+    add_user prepares a query to add a new user to the database.
+
+    :param q: the current query being prepared
+    :param username: the username of the user
+    :param password: the password of the user
+    :param billing_info: the billing information of the user
+    :param shipping_info: the shipping information of the user
+    :return: {
+                error = True/False
+                data = Error message/Success message 
+             }
+    """
+    
     q.addBindValue(username)
     q.addBindValue(password)
     q.addBindValue(billing_info)
@@ -117,7 +166,20 @@ def add_user(q, username, password, billing_info, shipping_info):
         return dict(error=True, data="Error while inserting {uname}. Details: {details}".format(uname=username, details=q.lastError().text()))
     return dict(error=False, data="{uname} has been added successfully".format(uname=username))
 
+
 def add_order(q, order_id, username, ISBN, order_date, quantity):
+    """
+    add_order prepares a query to add a new order to the database.
+
+    :param q: the current query being prepared
+    :param order_id: the order_id associated with this order
+    :param username: the username of the user that checked out
+    :param ISBN: the ISBN of the this particular book 
+    :param order_date: the date of the order
+    :param quantity: the number of times this book was sold during this instance of checkout
+    :return: None
+    """
+    
     q.addBindValue(order_id)
     q.addBindValue(username)
     q.addBindValue(ISBN)
@@ -126,10 +188,23 @@ def add_order(q, order_id, username, ISBN, order_date, quantity):
     q.exec()
 
 def check(func, *args):
+    """
+    check does error checking
+
+    :return: None
+    """
+    
     if not func(*args):
         raise ValueError(func.__self__.lastError())
+        
 
 def init_db():
+    """
+    init_db initializes the database with dummy data
+
+    :return: None
+    """
+    
     db = QSqlDatabase.addDatabase("QSQLITE")
     db.setDatabaseName(":memory:")
 
