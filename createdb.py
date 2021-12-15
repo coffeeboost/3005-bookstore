@@ -50,7 +50,7 @@ CREATE TABLE ORDERS
 	ISBN		integer check (ISBN >= 1000000000000 and ISBN <= 9999999999999),
 	order_date	date,
     quantity    integer, 
-	PRIMARY KEY (order_id, username, ISBN, order_date),
+	PRIMARY KEY (order_id, username, ISBN, order_date, quantity),
 	FOREIGN KEY (ISBN) references BOOKS
 	FOREIGN KEY (username) references USERS
 );
